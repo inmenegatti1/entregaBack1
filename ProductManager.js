@@ -4,7 +4,7 @@ const path = require('path')
 
 class ProdructManager{
     constructor(){
-        this.path = './product.json'
+        this.path = path.join(__dirname,'produtos.json')
         this.id = 1
     }
     async verificarTamId() {
@@ -23,7 +23,7 @@ class ProdructManager{
             return dataParse[dataTam -1].id + 1;
         }
     
-        return 1; // Caso o array esteja vazio
+        return 1
     }
 
     async addProduct(obj){
@@ -51,29 +51,45 @@ class ProdructManager{
          await fs.promises.writeFile(this.path, JSON.stringify(data))
     }
 
-    async editarProdutoId(id, objEditar){
+    async editarProdutoId(id, objEditar) {
+        const data = await this.lerArquivo();
+        const dataParse = JSON.parse(data);
+    
+        const posicao = dataParse.findIndex(produto => produto.id === id);
+        if (posicao > -1) {
+            const produtoExistente = dataParse[posicao];
+            const produtoAtualizado = { ...produtoExistente, ...objEditar, id: produtoExistente.id };
+            dataParse[posicao] = produtoAtualizado;
+            await this.salvarItensArquivo(dataParse);
+            return produtoAtualizado;
+        } else {
+            throw new Error('Não existe nenhum produto com esse ID');
+        }
+    }
+
+    async deletarItemId(id){
         const data = await this.lerArquivo()
         const dataParse = JSON.parse(data)
+        console.log(id)
+        const posicao = dataParse.findIndex(produto => produto.id === id)
+        console.log(posicao)
 
-        const posicao = dataParse.findIndex(produto=> produto.id === id)
         if(posicao > -1){
-            const idItemArray = dataParse[posicao].id
-            dataParse[posicao] = objEditar
-            dataParse[posicao].id = idItemArray
+            dataParse.splice(posicao,1)
+            await this.salvarItensArquivo(dataParse)
         }
-        else{
-            console.log('nao existe nenhum produto com esse id')
-        }
-        await this.salvarItensArquivo(dataParse)
+
+    }
+
+    async getProductsId(id){
+        const data = await this.lerArquivo()
+        const dataParse = JSON.parse(data)
+        const produtoEncontrado = dataParse.find(product =>product.id === id)
+        return produtoEncontrado
     }
     
 }
-
+module.exports = ProdructManager;
 const product = new ProdructManager()
 
-const teste = {
-    name:'fsdsdfdsfds'
-}
 
-
-product.addProduct(teste)
